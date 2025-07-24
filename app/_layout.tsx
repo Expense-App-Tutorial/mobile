@@ -7,6 +7,8 @@ import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import { Stack } from 'expo-router';
+
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -14,15 +16,42 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeToggle } from '~/components/ThemeToggle';
 import { useColorScheme, useInitialAndroidBarSync } from '~/lib/useColorScheme';
 import { NAV_THEME } from '~/theme';
+import React from 'react';
+import Splash from '~/components/screens/splash/screen';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
+
+SplashScreen.preventAutoHideAsync();
+
+SplashScreen.setOptions({
+  duration: 1000,
+  fade: true
+});
 
 export default function RootLayout() {
   useInitialAndroidBarSync();
   const { colorScheme, isDarkColorScheme } = useColorScheme();
+
+  const [isAppReady, setIsAppReady] = React.useState(false);
+
+  React.useEffect(() => {
+    const prepare = async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } catch (e) {
+        console.error('Lỗi khi chuẩn bị app:', e);
+      } finally {
+        setIsAppReady(true);
+        await SplashScreen.hideAsync();
+      }
+    };
+
+    prepare();
+  }, []);
+
+  if (!isAppReady) {
+    return <Splash />;
+  }
 
   return (
     <>
@@ -30,8 +59,6 @@ export default function RootLayout() {
         key={`root-status-bar-${isDarkColorScheme ? 'light' : 'dark'}`}
         style={isDarkColorScheme ? 'light' : 'dark'}
       />
-      {/* WRAP YOUR APP WITH ANY ADDITIONAL PROVIDERS HERE */}
-      {/* <ExampleProvider> */}
 
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BottomSheetModalProvider>
@@ -45,8 +72,6 @@ export default function RootLayout() {
           </ActionSheetProvider>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
-
-      {/* </ExampleProvider> */}
     </>
   );
 }
